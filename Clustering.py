@@ -2,8 +2,9 @@
 import scipy.spatial
 import math
 import copy
+import random
 
-def clustering(points, num_neighbors):
+def clustering(points, num_neighbors, randomness = 0.5):
 	assert len(points) > num_neighbors
 	print("Creating local maps...")
 	local_maps = {i:generate_local_map_from_point(i,points,num_neighbors) for i in range(len(points))}
@@ -38,8 +39,14 @@ def clustering(points, num_neighbors):
 			if any(map(lambda ph: ph in local_maps[i], hull)):
 				points_with_hull_in_local_map.append(i)
 
+		sorted_pts = sorted(points_with_hull_in_local_map, key = lambda p: -pt_fitness(p, uncovered_indices, local_maps, hull, hull_angles, com, points))
+		fit_pt = 0
+		while fit_pt < len(sorted_pts) - 1:
+			if random.random() > randomness:
+				break
+			fit_pt += 1
+		fit_pt = sorted_pts[fit_pt]
 
-		fit_pt = max(points_with_hull_in_local_map, key = lambda p: pt_fitness(p, uncovered_indices, local_maps, hull, hull_angles, com, points))
 		radius = max(map(lambda p: L2_distance(points[fit_pt], points[p]), local_maps[fit_pt]))
 		# radius is in distance of lat&long...
 		fit_pts.append({"pt": fit_pt, "neighbors": local_maps[fit_pt], "radius": radius})
