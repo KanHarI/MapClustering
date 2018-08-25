@@ -19,17 +19,28 @@ def clustering(points, num_neighbors):
 		else:
 			hull = list(map(lambda x: index_translation[x], scipy.spatial.ConvexHull(uncovered_points).vertices))
 
+		hull_angles = {}
+		for i in range(len(hull)):
+			h_prev = points[hull[(i-1) % len(hull)]]
+			h_cur = points[hull[i]]
+			h_next = points[hull[(i+1) % len(hull)]]
+
+			l1 = (h_cur[0] - h_prev[0], h_cur[1] - h_prev[1])
+			l2 = (h_next[0] - h_cur[0], h_next[1] - h_cur[1])
+
+			hull_angles[index_translation[i]] = abs(math.atan2(*l1)-math.atan2(*l2))
+
+		print(hull_angles)
+
 		points_with_hull_in_local_map = []
 		for i in uncovered_indices:
 			if any(map(lambda ph: ph in local_maps[i], hull)):
 				points_with_hull_in_local_map.append(i)
 
 		fit_pt = max(points_with_hull_in_local_map, key = lambda p: pt_fitness(p, uncovered_indices, local_maps, hull))
-		radius = max(
-			map(lambda p: L2_distance(points[fit_pt], points[p]), local_maps[fit_pt])
-			)
-		# radius is in distance of lat&long...
-		fit_pts.append({"pt": fit_pt, "neighbors": local_maps[fit_pt], "radius": radius})
+		print(fit_pt, pt_fitness(fit_pt, uncovered_indices, local_maps, hull))
+
+		fit_pts.append(fit_pt)
 
 		for i in local_maps[fit_pt]:
 			if i in uncovered_indices:

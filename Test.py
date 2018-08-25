@@ -4,8 +4,8 @@ import Clustering
 
 def main():
 	r = Clustering.clustering(Generators.JsonGenerator("locations.json").points, 20)
+	print("Solution size: " + str(len(r)))
 	print(r)
-	print("Solution size: " + len(r))
 	return 0
 
 if __name__ == "__main__":
