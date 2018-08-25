@@ -25,9 +25,13 @@ def clustering(points, num_neighbors):
 				points_with_hull_in_local_map.append(i)
 
 		edgeness = find_edgeness(uncovered_indices, local_maps)
-		fit_pt = max(points_with_hull_in_local_map, key = lambda p: pt_fitness(p, uncovered_indices, local_maps, hull, edgeness))
 
-		fit_pts.append(fit_pt)
+		fit_pt = max(points_with_hull_in_local_map, key = lambda p: pt_fitness(p, uncovered_indices, local_maps, hull, edgeness))
+		radius = max(
+			map(lambda p: L2_distance(points[fit_pt], points[p]), local_maps[fit_pt])
+			)
+		# radius is in distance of lat&long...
+		fit_pts.append({"pt": fit_pt, "neighbors": local_maps[fit_pt], "radius": radius})
 
 		for i in local_maps[fit_pt]:
 			if i in uncovered_indices:
@@ -58,6 +62,8 @@ def pt_fitness(pt, uncovered_indices, local_maps, hull, edgeness):
 	for i in local_maps[pt]:
 		if i in uncovered_indices:
 			fitness += edgeness[i]
+			if i in hull:
+				i += edgeness[i]*2 + 2
 	return fitness
 
 
