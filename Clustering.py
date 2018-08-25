@@ -6,9 +6,7 @@ import random
 
 def clustering(points, num_neighbors, randomness = 0.5):
 	assert len(points) > num_neighbors
-	print("Creating local maps...")
 	local_maps = {i:generate_local_map_from_point(i,points,num_neighbors) for i in range(len(points))}
-	print("Running search:")
 	index_translation = {i:i for i in range(len(points))}
 	uncovered_indices = list(range(len(points)))
 	uncovered_points = copy.deepcopy(points)
