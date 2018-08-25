@@ -24,7 +24,8 @@ def clustering(points, num_neighbors):
 			if any(map(lambda ph: ph in local_maps[i], hull)):
 				points_with_hull_in_local_map.append(i)
 
-		fit_pt = max(points_with_hull_in_local_map, key = lambda p: pt_fitness(p, uncovered_indices, local_maps, hull))
+		edgeness = find_edgeness(uncovered_indices, local_maps)
+		fit_pt = max(points_with_hull_in_local_map, key = lambda p: pt_fitness(p, uncovered_indices, local_maps, hull, edgeness))
 
 		fit_pts.append(fit_pt)
 
@@ -38,16 +39,25 @@ def clustering(points, num_neighbors):
 	return fit_pts
 
 
+def find_edgeness(uncovered_indices, local_maps):
+	edgeness = {}
+	for i in uncovered_indices:
+		edge_p = 0
+		for p in local_maps[i]:
+			if p not in uncovered_indices:
+				edge_p += 1
+		edgeness[i] = edge_p
+	return edgeness
+
+
 # Trying to minimize "Surface tension"
 # Should probably add more paramters and improve this function
 # maybe try to find distance of local mapped points from center of mass?
-def pt_fitness(pt, uncovered_indices, local_maps, hull):
+def pt_fitness(pt, uncovered_indices, local_maps, hull, edgeness):
 	fitness = 0
 	for i in local_maps[pt]:
 		if i in uncovered_indices:
-			fitness += 1
-		if i in hull:
-			fitness += 100
+			fitness += edgeness[i]
 	return fitness
 
 
