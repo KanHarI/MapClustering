@@ -31,13 +31,15 @@ def clustering(points, num_neighbors):
 			tmp = abs(math.atan2(*l1)-math.atan2(*l2))
 			hull_angles[hull[i]] = min(tmp, 2*math.pi-tmp)
 
+		com = find_center_of_mass(uncovered_points)
+
 		points_with_hull_in_local_map = []
 		for i in uncovered_indices:
 			if any(map(lambda ph: ph in local_maps[i], hull)):
 				points_with_hull_in_local_map.append(i)
 
 
-		fit_pt = max(points_with_hull_in_local_map, key = lambda p: pt_fitness(p, uncovered_indices, local_maps, hull, hull_angles))
+		fit_pt = max(points_with_hull_in_local_map, key = lambda p: pt_fitness(p, uncovered_indices, local_maps, hull, hull_angles, com, points))
 		radius = max(map(lambda p: L2_distance(points[fit_pt], points[p]), local_maps[fit_pt]))
 		# radius is in distance of lat&long...
 		fit_pts.append({"pt": fit_pt, "neighbors": local_maps[fit_pt], "radius": radius})
@@ -51,17 +53,21 @@ def clustering(points, num_neighbors):
 
 	return fit_pts
 
+def find_center_of_mass(pts):
+	xsum = sum(map(lambda x: x[0], pts))
+	ysum = sum(map(lambda x: x[1], pts))
+	return (xsum/len(pts), ysum/len(pts))
 
 # Trying to minimize "Surface tension"
 # Should probably add more paramters and improve this function
 # maybe try to find distance of local mapped points from center of mass?
-def pt_fitness(pt, uncovered_indices, local_maps, hull, hull_angles):
+def pt_fitness(pt, uncovered_indices, local_maps, hull, hull_angles, com, points):
 	fitness = 0
 	for i in local_maps[pt]:
 		if i in uncovered_indices:
-			fitness += 1
+			fitness += L2_distance(points[i], com)*0.1
 		if i in hull:
-			fitness += 10 * hull_angles[i]
+			fitness += 20*hull_angles[i]
 	return fitness
 
 
