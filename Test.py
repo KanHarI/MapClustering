@@ -3,7 +3,7 @@ import Generators
 import Clustering
 
 def main():
-	r = len(Clustering.clustering(Generators.WhiteNoiseGenerator(2000).points, 20))
+	r = len(Clustering.clustering(Generators.JsonGenerator("locations.json").points, 20))
 	print("Solution size: " + str(r))
 	return 0
 
