@@ -28,19 +28,19 @@ def clustering(points, num_neighbors):
 			l1 = (h_cur[0] - h_prev[0], h_cur[1] - h_prev[1])
 			l2 = (h_next[0] - h_cur[0], h_next[1] - h_cur[1])
 
-			hull_angles[index_translation[i]] = abs(math.atan2(*l1)-math.atan2(*l2))
-
-		print(hull_angles)
+			tmp = abs(math.atan2(*l1)-math.atan2(*l2))
+			hull_angles[hull[i]] = min(tmp, 2*math.pi-tmp)
 
 		points_with_hull_in_local_map = []
 		for i in uncovered_indices:
 			if any(map(lambda ph: ph in local_maps[i], hull)):
 				points_with_hull_in_local_map.append(i)
 
-		fit_pt = max(points_with_hull_in_local_map, key = lambda p: pt_fitness(p, uncovered_indices, local_maps, hull))
-		print(fit_pt, pt_fitness(fit_pt, uncovered_indices, local_maps, hull))
 
-		fit_pts.append(fit_pt)
+		fit_pt = max(points_with_hull_in_local_map, key = lambda p: pt_fitness(p, uncovered_indices, local_maps, hull, hull_angles))
+		radius = max(map(lambda p: L2_distance(points[fit_pt], points[p]), local_maps[fit_pt]))
+		# radius is in distance of lat&long...
+		fit_pts.append({"pt": fit_pt, "neighbors": local_maps[fit_pt], "radius": radius})
 
 		for i in local_maps[fit_pt]:
 			if i in uncovered_indices:
@@ -55,13 +55,13 @@ def clustering(points, num_neighbors):
 # Trying to minimize "Surface tension"
 # Should probably add more paramters and improve this function
 # maybe try to find distance of local mapped points from center of mass?
-def pt_fitness(pt, uncovered_indices, local_maps, hull):
+def pt_fitness(pt, uncovered_indices, local_maps, hull, hull_angles):
 	fitness = 0
 	for i in local_maps[pt]:
 		if i in uncovered_indices:
 			fitness += 1
 		if i in hull:
-			fitness += 100
+			fitness += 10 * hull_angles[i]
 	return fitness
 
 
