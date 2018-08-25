@@ -5,7 +5,7 @@ import Clustering
 def main():
 	min_size = 1000
 	for i in range(1000):
-		r = Clustering.clustering(Generators.JsonGenerator("locations.json").points, 20)
+		r = Clustering.clustering(Generators.JsonGenerator("locations.json").points, 20, 0.5, Clustering.taxicab_distance)
 		if (len(r) < min_size):
 			min_size = len(r)
 			print(r)
