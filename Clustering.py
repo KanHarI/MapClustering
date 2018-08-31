@@ -2,7 +2,7 @@
 import scipy.spatial
 import math
 import copy
-import numpy
+import numpy as np
 
 def L2_distance(p1, p2):
 	dx = p1[0]-p2[0]
@@ -16,7 +16,25 @@ def taxicab_distance(p1, p2):
 	return abs(dx)+abs(dy)
 
 
-distance_normalizer = []
+class MapClusterer:
+	def __init__(self, points, num_neighbors, distance_func = L2_distance):
+		print("Initializing MapClusterer object...")
+		self.distance_normalizer = 0
+		self.point_distances = np.array(
+			map(
+				lambda center_pt: map(
+					lambda i: distance_func(points[i], points[center_pt]),
+					range(len(points)))
+				,
+				range(len(points))))
+		self.local_points = np.array(map(
+			lambda center_pt: sorted(
+				range(len(points)),
+				key=lambda i: self.point_distances[center_pt][i]),
+			range(len(points))))
+		self.distance_normalizer = np.mean(self.point_distances)
+		print(self.distance_normalizer)
+
 
 
 def clustering(points, num_neighbors, distance_func = L2_distance):
@@ -25,7 +43,7 @@ def clustering(points, num_neighbors, distance_func = L2_distance):
 	local_maps = {i:generate_local_map_from_point(i,points,num_neighbors,distance_func) for i in range(len(points))}
 	
 	global distance_normalizer
-	distance_normalizer = numpy.mean(distance_normalizer)
+	distance_normalizer = np.mean(distance_normalizer)
 
 	print("Running search:")
 	index_translation = {i:i for i in range(len(points))}
@@ -94,8 +112,9 @@ def generate_local_map_from_point(pt_index, points, num_neighbors, distance_func
 	center_pt = points[pt_index]
 	
 	# Allows for distance normalization
+
 	global distance_normalizer
-	distance_normalizer.append(numpy.mean(list(map(lambda i: distance_func(points[i], center_pt), range(len(points))))))
+	distance_normalizer.append(np.mean())
 
 	sorted_pts = sorted(range(len(points)), key = lambda i: distance_func(points[i], center_pt))
 	return sorted_pts[:num_neighbors]
