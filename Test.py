@@ -3,9 +3,8 @@ import Generators
 import Clustering
 
 def main():
-	r = Clustering.clustering(Generators.JsonGenerator("locations.json").points, 20)
-	print(r)
-	print("Solution size: " + str(len(r)))
+	r = Clustering.MapClusterer(Generators.WhiteNoiseGenerator(1000).points, 10, Clustering.L2_distance, 0.05).run_search()
+	print("Found solution! result length: {0}".format(len(r)))
 	return 0
 
 if __name__ == "__main__":
