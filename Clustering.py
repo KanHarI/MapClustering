@@ -16,6 +16,11 @@ def taxicab_distance(p1, p2):
 	dy = p1[1]-p2[1]
 	return abs(dx)+abs(dy)
 
+def geographic_distance(p1, p2):
+	import geopy.distance
+	return geopy.distance.vincenty(p1, p2).miles
+
+
 def take_while(generator, cond):
 	for g in generator:
 		if not cond(g):
@@ -39,12 +44,17 @@ class MapClusterer:
 		self.create_graph()
 
 	def calculate_point_distances(self):
-		self.point_distances = np.array(
-			list(map(
-				lambda center_pt: np.array(list(map(
-					lambda i: self.distance_func(self.points[i], self.points[center_pt]),
-					range(self.size)))),
-				range(self.size))))
+		point_distances = []
+		for center_pt in progressbar.progressbar(range(self.size)):
+			point_distances.append(
+				np.array(list(map(
+					lambda i: point_distances[i][center_pt] if (i < center_pt) else
+					self.distance_func(self.points[i], self.points[center_pt]),
+					range(self.size)
+					)))
+				)
+
+		self.point_distances = np.array(point_distances)
 
 
 	def find_links(self):
@@ -69,7 +79,7 @@ class MapClusterer:
 				self.graph.add_edge(pi,di)
 
 
-	def run_search(self, sensitivity=5, pr_alpha=0.85):
+	def run_search(self, sensitivity=7, pr_alpha=0.95):
 		print("Running search...")
 		solution = []
 		graph = copy.deepcopy(self.graph)
@@ -97,7 +107,7 @@ class MapClusterer:
 					rank += modified_p_rank[neighbor]
 				my_rank[node] = rank
 			maximally_ranked_node = max(p_rank, key=lambda i: my_rank[i])
-			solution.append(maximally_ranked_node)
+			solution.append((maximally_ranked_node, list(graph.successors(maximally_ranked_node))))
 			graph.remove_nodes_from(graph.successors(maximally_ranked_node))
 		pb.finish()
 		return solution

@@ -13,4 +13,4 @@ class JsonGenerator:
 		self.points = []
 		c = json.loads(open(json_path, 'rb').read())
 		for row in c:
-			self.points.append((row['longitude'], row['latitude']))
+			self.points.append((float(row['lat']), float(row['lng'])))

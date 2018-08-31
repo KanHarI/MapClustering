@@ -3,8 +3,10 @@ import Generators
 import Clustering
 
 def main():
-	r = Clustering.MapClusterer(Generators.WhiteNoiseGenerator(1000).points, 10, Clustering.L2_distance, 0.05).run_search()
-	print("Found solution! result length: {0}".format(len(r)))
+	clusterer = Clustering.MapClusterer(Generators.WhiteNoiseGenerator(1000).points, 10, Clustering.L2_distance, 0.05)
+	r = clusterer.run_search(sensitivity=12)
+	print("Found solution with sensitivity: {1} and pr_alpha: {2} result length: {0}".format(len(r), 12, 0.95))
+	open("result.txt", 'w').write(str(r))
 	return 0
 
 if __name__ == "__main__":
