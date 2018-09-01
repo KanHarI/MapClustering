@@ -68,10 +68,13 @@ class DefaultLinkFinder:
 			possible_neighbors = possible_neighbors[:self.num_neighbors]
 		return np.array(possible_neighbors)
 
+	def add_node(self, n):
+		self.graph.add_node(n)
+
 	def create_graph(self):
 		self.graph = nx.DiGraph()
 		for pi in range(self.size):
-			self.graph.add_node(pi)
+			self.add_node(pi)
 		for pi in range(self.size):
 			for di in self.links[pi]:
 				self.graph.add_edge(pi,di)
@@ -84,9 +87,13 @@ class MultiradiusLinkFinder(DefaultLinkFinder):
 		# from smallest radius and most neighbors to greatest radius
 		# and least neighbors
 		self.distance_neighbor_list = distance_neighbor_list
+		self.node_labels = {}
+
+	def add_node(self, n):
+		self.graph.add_node(n, lbl=self.node_labels[n])
 
 	def find_neighbors(self, center_pt):
-		max_distance = self.distance_neighbor_list[-1][0]
+		max_distance = self.distance_neighbor_list[-1][1]
 		possible_neighbors = []
 		for dst in range(self.size):
 			if max_distance is not None and self.point_distances[center_pt][dst] > max_distance:
@@ -96,17 +103,19 @@ class MultiradiusLinkFinder(DefaultLinkFinder):
 
 		distance_neighbor_list_ptr = 0
 		i = 0
+		self.node_labels[center_pt] = distance_neighbor_list_ptr
 		while i < len(possible_neighbors):
-			if i > self.distance_neighbor_list[distance_neighbor_list_ptr][1]:
+			if i >= self.distance_neighbor_list[distance_neighbor_list_ptr][0]:
 				possible_neighbors = possible_neighbors[:i]
 				break
-			if self.point_distances[center_pt][i] > distance_neighbor_list[distance_neighbor_list_ptr][0]:
+			if self.point_distances[center_pt][possible_neighbors[i]] > self.distance_neighbor_list[distance_neighbor_list_ptr][1]:
 				distance_neighbor_list_ptr += 1
-				if distance_neighbor_list_ptr >= len(distance_neighbor_list):
+				if distance_neighbor_list_ptr >= len(self.distance_neighbor_list):
 					possible_neighbors = possible_neighbors[:i]
 					break
+				continue
+			self.node_labels[center_pt] = distance_neighbor_list_ptr
 			i += 1
-
 
 		return np.array(possible_neighbors)
 
@@ -117,6 +126,18 @@ class MapClusterer:
 		self.points = points
 		self.size = len(self.points)
 		self.graph = graph_creator.run(self.points)
+
+
+	def add_details(self, solution):
+		return list(map(lambda s: {
+			"point": self.points[s[0]],
+			"id": s[0],
+			"label": self.graph.node[s[0]],
+			"neighbors": s[1],
+			"neighbors_points": list(map(lambda i: self.points[i], s[1])),
+			"wasted_neighbors": s[2],
+			"wasted_neighbors_points": list(map(lambda i: self.points[i], s[2]))
+			}, solution))
 
 
 	def run_search(self, sensitivity=7, pr_alpha=0.95):
@@ -147,7 +168,8 @@ class MapClusterer:
 					rank += modified_p_rank[neighbor]
 				my_rank[node] = rank
 			maximally_ranked_node = max(p_rank, key=lambda i: my_rank[i])
-			solution.append((maximally_ranked_node, list(graph.successors(maximally_ranked_node))))
+			wasted_points = list(filter(lambda x: x not in graph.nodes, self.graph.successors(maximally_ranked_node)))
+			solution.append((maximally_ranked_node, list(graph.successors(maximally_ranked_node)), wasted_points))
 			graph.remove_nodes_from(graph.successors(maximally_ranked_node))
 		pb.finish()
-		return solution
+		return self.add_details(solution)
