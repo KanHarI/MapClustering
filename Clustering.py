@@ -4,6 +4,7 @@ import copy
 import numpy as np
 import networkx as nx
 import progressbar
+import PartialPageRank as ppr
 
 
 def L2_distance(p1, p2):
@@ -40,7 +41,9 @@ class DefaultLinkFinder:
 
 	def calculate_point_distances(self):
 		point_distances = []
-		for center_pt in progressbar.progressbar(range(self.size)):
+		pb = progressbar.ProgressBar(maxval=self.size)
+		pb.start()
+		for center_pt in range(self.size):
 			point_distances.append(
 				np.array(list(map(
 					lambda i: point_distances[i][center_pt] if (i < center_pt) else
@@ -48,13 +51,19 @@ class DefaultLinkFinder:
 					range(self.size)
 					)))
 				)
+			pb.update(center_pt+1)
+		pb.finish()
 		self.point_distances = np.array(point_distances)
 
 
 	def find_links(self):
 		self.links = []
-		for center_pt in progressbar.progressbar(range(self.size)):
+		pb = progressbar.ProgressBar(maxval=self.size)
+		pb.start()
+		for center_pt in range(self.size):
 			self.links.append(self.find_neighbors(center_pt))
+			pb.update(center_pt+1)
+		pb.finish()
 		self.links=np.array(self.links)
 	
 	def find_neighbors(self, center_pt):
@@ -143,12 +152,12 @@ class MapClusterer:
 	def run_search(self, sensitivity=7, pr_alpha=0.95):
 		print("Running search...")
 		solution = []
-		graph = copy.deepcopy(self.graph)
-		pb = progressbar.ProgressBar(max_value=self.size)
-
-		while(graph.number_of_nodes() > 0):
-			pb.update(self.size - graph.number_of_nodes())
-			p_rank = nx.pagerank(graph, alpha=pr_alpha)
+		pb = progressbar.ProgressBar(maxval=self.size)
+		pb.start()
+		ppr_graph = ppr.PartialPageRank(copy.deepcopy(self.graph), alpha=pr_alpha)
+		while(ppr_graph.graph.number_of_nodes() > 0):
+			pb.update(self.size - ppr_graph.graph.number_of_nodes())
+			p_rank = ppr_graph.weights
 			maximally_ranked_node = max(p_rank, key=lambda i: p_rank[i])
 			max_rank = p_rank[maximally_ranked_node]
 
@@ -156,20 +165,17 @@ class MapClusterer:
 			modified_p_rank = {key: (math.exp((max_rank - value)*sensitivity/max_rank)) for (key, value) in p_rank.items()}
 			
 			# my_rank takes into account all neighbors of a possible nodes.
-			# The iteration is over self.graph.nodes() and not over 
-			# graph.nodes() as sometimes a node already removed from the graph
-			# will be the best match.
 			my_rank = {}
-			for node in self.graph.nodes():
+			for node in ppr_graph.graph.nodes():
 				rank = 0
 				for neighbor in self.graph.successors(node):
-					if neighbor not in graph.nodes():
+					if neighbor not in ppr_graph.graph.nodes():
 						continue
 					rank += modified_p_rank[neighbor]
 				my_rank[node] = rank
 			maximally_ranked_node = max(p_rank, key=lambda i: my_rank[i])
-			wasted_points = list(filter(lambda x: x not in graph.nodes, self.graph.successors(maximally_ranked_node)))
-			solution.append((maximally_ranked_node, list(graph.successors(maximally_ranked_node)), wasted_points))
-			graph.remove_nodes_from(graph.successors(maximally_ranked_node))
+			wasted_points = list(filter(lambda x: x not in ppr_graph.graph.nodes, self.graph.successors(maximally_ranked_node)))
+			solution.append((maximally_ranked_node, list(ppr_graph.graph.successors(maximally_ranked_node)), wasted_points))
+			ppr_graph.remove_nodes(ppr_graph.graph.successors(maximally_ranked_node))
 		pb.finish()
 		return self.add_details(solution)

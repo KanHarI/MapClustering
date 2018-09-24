@@ -3,10 +3,10 @@ import random
 import json
 
 class WhiteNoiseGenerator:
-	def __init__(self, n):
+	def __init__(self, n, r=1):
 		self.points = []
 		for i in range(n):
-			self.points.append((random.random(),random.random()))
+			self.points.append((random.random()*r,random.random()*r))
 
 class JsonGenerator:
 	def __init__(self, json_path):
