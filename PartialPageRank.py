@@ -45,7 +45,7 @@ class PartialPageRank:
 			self.err = sum(abs(self.weights[node] - wlast[node]) for node in self.graph.nodes())
 
 	# Removes nodes AND updates pagerank result
-	def remove_nodes(self, rem_nodes, iterations=2):
+	def remove_nodes(self, rem_nodes, iterations=1):
 		rem_nodes = list(rem_nodes)
 		removed_sum = sum(self.weights[node] for node in rem_nodes)
 		for node in rem_nodes:
