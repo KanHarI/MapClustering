@@ -27,7 +27,7 @@ class MapClusterer:
 			}, solution))
 
 
-	def run_search(self, sensitivity=7, pr_alpha=0.95):
+	def run_search(self, sensitivity=7, pr_alpha=0.95, pr_accuracy=1):
 		solution = []
 		# Initialize the partial page rank object
 		ppr_graph = ppr.PartialPageRank(copy.deepcopy(self.graph), alpha=pr_alpha)
@@ -64,7 +64,7 @@ class MapClusterer:
 			solution.append((maximally_ranked_node, list(ppr_graph.graph.successors(maximally_ranked_node)), wasted_points))
 			
 			# removes nodes and also updates page rank rankings
-			ppr_graph.remove_nodes(ppr_graph.graph.successors(maximally_ranked_node))
+			ppr_graph.remove_nodes(ppr_graph.graph.successors(maximally_ranked_node), pr_accuracy)
 			
 			pb.update(self.size - ppr_graph.graph.number_of_nodes())
 
