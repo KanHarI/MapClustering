@@ -74,6 +74,9 @@ class DefaultLinkFinder:
 			for di in self.links[pi]:
 				self.graph.add_edge(pi,di)
 
+	def add_node(self, n):
+		self.graph.add_node(n)
+
 
 # A specialized link finder, has multiple concentric rings of possible
 # neighbors in different radi with different max_negihbors
