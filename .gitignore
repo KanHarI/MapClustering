@@ -104,4 +104,4 @@ venv.bak/
 .mypy_cache/
 locations.json
 *.json
-*.txt
+result*.txt
